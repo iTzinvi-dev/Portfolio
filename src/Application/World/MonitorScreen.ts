@@ -187,7 +187,7 @@ export default class MonitorScreen extends EventEmitter {
         if (urlParams.has('dev-os')) {
             iframe.src = 'http://localhost:3000/';
         } else {
-            iframe.src = './os/';
+            iframe.src = 'https://ossystem-pi.vercel.app/';
         }
         iframe.style.width = this.screenSize.width + 'px';
         iframe.style.height = this.screenSize.height + 'px';
