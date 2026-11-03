@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a192f"/>
+      <stop offset="50%" stop-color="#112240"/>
+      <stop offset="100%" stop-color="#020c1b"/>
+    </linearGradient>
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#64ffda"/>
+      <stop offset="100%" stop-color="#00b4d8"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Frame -->
+  <rect width="400" height="400" rx="20" fill="url(#bg)" stroke="#64ffda" stroke-width="4"/>
+  
+  <!-- CRT scanlines effect -->
+  <pattern id="scanlines" width="100" height="4" patternUnits="userSpaceOnUse">
+    <line x1="0" y1="0" x2="100" y2="0" stroke="rgba(0,0,0,0.3)" stroke-width="1.5"/>
+  </pattern>
+  <rect width="400" height="400" rx="20" fill="url(#scanlines)" pointer-events="none"/>
+
+  <!-- Outer Cyber Ring -->
+  <circle cx="200" cy="180" r="120" fill="none" stroke="#233554" stroke-width="6" stroke-dasharray="10 8"/>
+  <circle cx="200" cy="180" r="105" fill="#0f172a" stroke="#64ffda" stroke-width="2" filter="url(#glow)"/>
+
+  <!-- Cyber Security Shield -->
+  <path d="M200 95 L265 125 L265 190 C265 235 200 265 200 265 C200 265 135 235 135 190 L135 125 Z" 
+        fill="#1e293b" stroke="#00b4d8" stroke-width="3"/>
+
+  <!-- Shield Inner Accent -->
+  <path d="M200 110 L250 135 L250 185 C250 220 200 245 200 245 C200 245 150 220 150 185 L150 135 Z" 
+        fill="none" stroke="#64ffda" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+  <!-- Central Terminal / Automation Glyph -->
+  <path d="M175 160 L195 180 L175 200" fill="none" stroke="#64ffda" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="205" y1="200" x2="225" y2="200" stroke="#64ffda" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Binary / Circuit Nodes -->
+  <circle cx="160" cy="120" r="3" fill="#64ffda"/>
+  <circle cx="240" cy="120" r="3" fill="#64ffda"/>
+  <line x1="160" y1="120" x2="185" y2="120" stroke="#64ffda" stroke-width="1" stroke-dasharray="2 2"/>
+  <line x1="240" y1="120" x2="215" y2="120" stroke="#64ffda" stroke-width="1" stroke-dasharray="2 2"/>
+
+  <!-- Logo Banner -->
+  <rect x="50" y="315" width="300" height="50" rx="8" fill="#0a192f" stroke="#64ffda" stroke-width="2"/>
+  <text x="200" y="347" text-anchor="middle" font-family="'Courier New', monospace" font-size="22" font-weight="bold" fill="#64ffda" letter-spacing="3">
+    iTzinvi // invi
+  </text>
+  <text x="200" y="385" text-anchor="middle" font-family="'Courier New', monospace" font-size="11" fill="#8892b0" letter-spacing="1.5">
+    AUTOMATION • DEV • CYBERSEC
+  </text>
+</svg>

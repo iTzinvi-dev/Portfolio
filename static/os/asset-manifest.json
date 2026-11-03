@@ -1,0 +1,30 @@
+{
+  "files": {
+    "main.css": "./static/css/main.22d0a6ca.css",
+    "main.js": "./static/js/main.0167ede9.js",
+    "static/js/787.749b4a44.chunk.js": "./static/js/787.749b4a44.chunk.js",
+    "static/media/house_master.mp3": "./static/media/house_master.c7658602090fa4de7901.mp3",
+    "static/media/edge_unmastered.mp3": "./static/media/edge_unmastered.5fda28a397a77f0cd67d.mp3",
+    "static/media/break.mp3": "./static/media/break.ca994a82925ac512580d.mp3",
+    "static/media/dnb_drop_drums.mp3": "./static/media/dnb_drop_drums.24751dc8ad05058a701a.mp3",
+    "static/media/computer.mp4": "./static/media/computer.f6d03fdb3cc6238c1dd0.mp4",
+    "static/media/MSSansSerif.ttf": "./static/media/MSSansSerif.aa14e7b110864a3c2e08.ttf",
+    "static/media/houseProject.png": "./static/media/houseProject.fdb8b40ccf0bed8a6554.png",
+    "static/media/dnbDrumsProject.png": "./static/media/dnbDrumsProject.c9dace015fac3b0a06af.png",
+    "static/media/ee.jpg": "./static/media/ee.7656e3a317181c8a39b1.jpg",
+    "static/media/Terminal.ttf": "./static/media/Terminal.6a1b7290048681921b2c.ttf",
+    "static/media/neverGiveUp.jpg": "./static/media/neverGiveUp.c9ee4e48677de77065a9.jpg",
+    "static/media/Millennium.ttf": "./static/media/Millennium.e16d74a8e8e0567ce30e.ttf",
+    "static/media/Millennium-Bold.ttf": "./static/media/Millennium-Bold.cd5e3be832ebd008c852.ttf",
+    "static/media/invi_avatar.svg": "./static/media/invi_avatar.6d1da409a45ff68a1f71f90d77b888f5.svg",
+    "static/media/invi_workspace.svg": "./static/media/invi_workspace.0b1862cacb6c4e7cde91ce0eb42dafd4.svg",
+    "index.html": "./index.html",
+    "main.22d0a6ca.css.map": "./static/css/main.22d0a6ca.css.map",
+    "main.0167ede9.js.map": "./static/js/main.0167ede9.js.map",
+    "787.749b4a44.chunk.js.map": "./static/js/787.749b4a44.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.22d0a6ca.css",
+    "static/js/main.0167ede9.js"
+  ]
+}
