@@ -67,9 +67,13 @@ export default class Camera extends EventEmitter {
         };
 
         document.addEventListener('mousedown', (event) => {
-            event.preventDefault();
             // @ts-ignore
-            if (event.target.id === 'prevent-click') return;
+            const targetId = event.target?.id;
+            // @ts-ignore
+            if (targetId === 'prevent-click' || targetId === 'computer-screen' || event.inComputer) {
+                return;
+            }
+            event.preventDefault();
             // print target and current keyframe
             if (
                 this.currentKeyframe === CameraKey.IDLE ||

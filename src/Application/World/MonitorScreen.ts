@@ -144,56 +144,67 @@ export default class MonitorScreen extends EventEmitter {
         // Create iframe
         const iframe = document.createElement('iframe');
 
-        // Bubble mouse move events to the main application, so we can affect the camera
-        iframe.onload = () => {
-            if (iframe.contentWindow) {
-                window.addEventListener('message', (event) => {
-                    var evt = new CustomEvent(event.data.type, {
-                        bubbles: true,
-                        cancelable: false,
-                    });
+        // Bubble events from iframe to the main application
+        window.addEventListener('message', (event) => {
+            if (!event.data || !event.data.type) return;
+            if (iframe.contentWindow && event.source !== iframe.contentWindow) return;
 
-                    // @ts-ignore
-                    evt.inComputer = true;
-                    if (event.data.type === 'mousemove') {
-                        var clRect = iframe.getBoundingClientRect();
-                        const { top, left, width, height } = clRect;
-                        const widthRatio = width / IFRAME_SIZE.w;
-                        const heightRatio = height / IFRAME_SIZE.h;
+            const evt = new CustomEvent(event.data.type, {
+                bubbles: true,
+                cancelable: false,
+            });
 
-                        // @ts-ignore
-                        evt.clientX = Math.round(
-                            event.data.clientX * widthRatio + left
-                        );
-                        //@ts-ignore
-                        evt.clientY = Math.round(
-                            event.data.clientY * heightRatio + top
-                        );
-                    } else if (event.data.type === 'keydown') {
-                        // @ts-ignore
-                        evt.key = event.data.key;
-                    } else if (event.data.type === 'keyup') {
-                        // @ts-ignore
-                        evt.key = event.data.key;
-                    }
+            // @ts-ignore
+            evt.inComputer = true;
+            if (event.data.type === 'mousemove') {
+                const clRect = iframe.getBoundingClientRect();
+                const { top, left, width, height } = clRect;
+                const widthRatio = width / IFRAME_SIZE.w;
+                const heightRatio = height / IFRAME_SIZE.h;
 
-                    iframe.dispatchEvent(evt);
-                });
+                // @ts-ignore
+                evt.clientX = Math.round(
+                    event.data.clientX * widthRatio + left
+                );
+                // @ts-ignore
+                evt.clientY = Math.round(
+                    event.data.clientY * heightRatio + top
+                );
+            } else if (event.data.type === 'keydown' || event.data.type === 'keyup') {
+                // @ts-ignore
+                evt.key = event.data.key;
             }
-        };
+
+            iframe.dispatchEvent(evt);
+        });
 
         // Set iframe attributes
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('dev-os')) {
+        const customUrl = urlParams.get('os-url');
+        if (customUrl) {
+            iframe.src = customUrl;
+        } else if (urlParams.has('dev-os')) {
             iframe.src = 'http://localhost:3000/';
         } else {
-            iframe.src = 'https://ossystem-pi.vercel.app/';
+            iframe.src = './os/';
+            iframe.src = './os/index.html';
         }
+
+        // Automatic fallback to hosted URL if local bundle fails
+        let fallbackTriggered = false;
+        iframe.onerror = () => {
+            if (!fallbackTriggered && iframe.src !== 'https://ossystem-pi.vercel.app/') {
+                fallbackTriggered = true;
+                iframe.src = 'https://ossystem-pi.vercel.app/';
+            }
+        };
+
         iframe.style.width = this.screenSize.width + 'px';
         iframe.style.height = this.screenSize.height + 'px';
         iframe.style.padding = IFRAME_PADDING + 'px';
         iframe.style.boxSizing = 'border-box';
         iframe.style.opacity = '1';
+        iframe.style.zIndex = '1';
         iframe.className = 'jitter';
         iframe.id = 'computer-screen';
         iframe.frameBorder = '0';
@@ -222,12 +233,13 @@ export default class MonitorScreen extends EventEmitter {
         this.cssScene.add(object);
 
         // Create GL plane
-        const material = new THREE.MeshLambertMaterial();
-        material.side = THREE.DoubleSide;
-        material.opacity = 0;
-        material.transparent = true;
-        // NoBlending allows the GL plane to occlude the CSS plane
-        material.blending = THREE.NoBlending;
+        const material = new THREE.MeshBasicMaterial({
+            side: THREE.DoubleSide,
+            color: 0x000000,
+            opacity: 0,
+            transparent: true,
+            blending: THREE.NoBlending,
+        });
 
         // Create plane geometry
         const geometry = new THREE.PlaneGeometry(
