@@ -186,7 +186,6 @@ export default class MonitorScreen extends EventEmitter {
         } else if (urlParams.has('dev-os')) {
             iframe.src = 'http://localhost:3000/';
         } else {
-            iframe.src = './os/';
             iframe.src = './os/index.html';
         }
 
