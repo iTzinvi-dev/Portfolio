@@ -14,12 +14,17 @@ export default class Sizes extends EventEmitter {
         this.pixelRatio = Math.min(window.devicePixelRatio, 2);
 
         // Resize event
-        window.addEventListener('resize', () => {
+        const handleResize = () => {
             this.width = window.innerWidth;
             this.height = window.innerHeight;
             this.pixelRatio = Math.min(window.devicePixelRatio, 2);
 
             this.trigger('resize');
+        };
+
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(handleResize, 100);
         });
     }
 }

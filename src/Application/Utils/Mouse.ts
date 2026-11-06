@@ -18,11 +18,13 @@ export default class Mouse extends EventEmitter {
 
         // Resize event
         this.on('mousemove', (event: any) => {
-            if (event.clientX && event.clientY) {
+            if (typeof event.clientX === 'number' && !isNaN(event.clientX)) {
                 this.x = event.clientX;
+            }
+            if (typeof event.clientY === 'number' && !isNaN(event.clientY)) {
                 this.y = event.clientY;
             }
-            this.inComputer = event.inComputer ? true : false;
+            this.inComputer = !!event.inComputer;
         });
     }
 }

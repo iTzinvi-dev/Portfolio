@@ -11,8 +11,8 @@ import EventEmitter from '../Utils/EventEmitter';
 const SCREEN_SIZE = { w: 1280, h: 1024 };
 const IFRAME_PADDING = 32;
 const IFRAME_SIZE = {
-    w: SCREEN_SIZE.w - IFRAME_PADDING,
-    h: SCREEN_SIZE.h - IFRAME_PADDING,
+    w: SCREEN_SIZE.w - IFRAME_PADDING * 2,
+    h: SCREEN_SIZE.h - IFRAME_PADDING * 2,
 };
 
 export default class MonitorScreen extends EventEmitter {
@@ -62,7 +62,7 @@ export default class MonitorScreen extends EventEmitter {
             'mousemove',
             (event) => {
                 // @ts-ignore
-                const id = event.target.id;
+                const id = event.target ? (event.target as HTMLElement).id : undefined;
                 if (id === 'computer-screen') {
                     // @ts-ignore
                     event.inComputer = true;
@@ -83,10 +83,11 @@ export default class MonitorScreen extends EventEmitter {
                     this.camera.trigger('leftMonitor');
                 }
 
-                if (
-                    !this.inComputer &&
+                if (this.inComputer) {
+                    this.shouldLeaveMonitor = false;
+                } else if (
                     this.mouseClickInProgress &&
-                    this.prevInComputer
+                    (this.prevInComputer || this.shouldLeaveMonitor)
                 ) {
                     this.shouldLeaveMonitor = true;
                 } else {
@@ -118,7 +119,7 @@ export default class MonitorScreen extends EventEmitter {
                 this.inComputer = event.inComputer;
                 this.application.mouse.trigger('mouseup', [event]);
 
-                if (this.shouldLeaveMonitor) {
+                if (this.shouldLeaveMonitor || (!this.inComputer && this.prevInComputer)) {
                     this.camera.trigger('leftMonitor');
                     this.shouldLeaveMonitor = false;
                 }
@@ -128,6 +129,9 @@ export default class MonitorScreen extends EventEmitter {
             },
             false
         );
+        window.addEventListener('blur', () => {
+            this.mouseClickInProgress = false;
+        });
     }
 
     /**
@@ -144,10 +148,93 @@ export default class MonitorScreen extends EventEmitter {
         // Create iframe
         const iframe = document.createElement('iframe');
 
-        // Bubble events from iframe to the main application
+        let loadConfirmed = false;
+        let localDocumentLoaded = false;
+        let fallbackAttempted = false;
+        let recoveryAttempted = false;
+        let watchdogTimer: any = null;
+
+        // Set iframe attributes
+        const urlParams = new URLSearchParams(window.location.search);
+        const customUrl = urlParams.get('os-url');
+        const fallbackUrl = 'https://ossystem-pi.vercel.app/';
+        const defaultLocalUrl = './os/index.html';
+
+        let targetUrl = defaultLocalUrl;
+        if (customUrl) {
+            targetUrl = customUrl;
+        } else if (urlParams.has('dev-os')) {
+            targetUrl = 'http://localhost:3000/';
+        }
+        iframe.src = targetUrl;
+
+        const handleFatalLoadFailure = () => {
+            if (recoveryAttempted) return;
+            recoveryAttempted = true;
+            console.error('[MonitorScreen] Both local bundle and fallback endpoint encountered delay/errors. Initiating recovery reload.');
+            setTimeout(() => {
+                iframe.src = defaultLocalUrl + '?retry=' + Date.now();
+            }, 1000);
+        };
+
+        const triggerFallback = () => {
+            if (customUrl || urlParams.has('dev-os')) return;
+            if (!fallbackAttempted && iframe.src !== fallbackUrl) {
+                fallbackAttempted = true;
+                console.warn('[MonitorScreen] Local OS bundle unavailable or error detected; switching to fallback endpoint:', fallbackUrl);
+                iframe.src = fallbackUrl;
+
+                if (watchdogTimer) clearTimeout(watchdogTimer);
+                watchdogTimer = setTimeout(() => {
+                    if (!loadConfirmed) {
+                        try {
+                            iframe.contentWindow?.postMessage({ type: 'host-ping' }, '*');
+                        } catch (e) {}
+                        handleFatalLoadFailure();
+                    }
+                }, 8000);
+            } else {
+                handleFatalLoadFailure();
+            }
+        };
+
+        // Bubble events from iframe to the main application & handle ready signals
         window.addEventListener('message', (event) => {
             if (!event.data || !event.data.type) return;
             if (iframe.contentWindow && event.source !== iframe.contentWindow) return;
+
+            // Handshake & health confirmation
+            if (event.data.type === 'os-ready') {
+                loadConfirmed = true;
+                if (watchdogTimer) {
+                    clearTimeout(watchdogTimer);
+                    watchdogTimer = null;
+                }
+                return;
+            }
+
+            if (event.data.type === 'mouseenter') {
+                this.inComputer = true;
+                this.shouldLeaveMonitor = false;
+                if (!this.prevInComputer) {
+                    this.camera.trigger('enterMonitor');
+                }
+                this.prevInComputer = true;
+                return;
+            }
+
+            if (event.data.type === 'mouseleave') {
+                this.inComputer = false;
+                if (this.prevInComputer) {
+                    if (!this.mouseClickInProgress) {
+                        this.camera.trigger('leftMonitor');
+                    } else {
+                        this.shouldLeaveMonitor = true;
+                    }
+                }
+                this.prevInComputer = false;
+                return;
+            }
 
             const evt = new CustomEvent(event.data.type, {
                 bubbles: true,
@@ -158,45 +245,125 @@ export default class MonitorScreen extends EventEmitter {
             evt.inComputer = true;
             if (event.data.type === 'mousemove') {
                 const clRect = iframe.getBoundingClientRect();
-                const { top, left, width, height } = clRect;
-                const widthRatio = width / IFRAME_SIZE.w;
-                const heightRatio = height / IFRAME_SIZE.h;
+                const left = clRect?.left || 0;
+                const top = clRect?.top || 0;
+                const width = clRect?.width || SCREEN_SIZE.w;
+                const height = clRect?.height || SCREEN_SIZE.h;
+                const scaleX = width / SCREEN_SIZE.w;
+                const scaleY = height / SCREEN_SIZE.h;
 
+                if (typeof event.data.clientX !== 'number' || isNaN(event.data.clientX)) event.data.clientX = 0;
+                if (typeof event.data.clientY !== 'number' || isNaN(event.data.clientY)) event.data.clientY = 0;
+
+                // Accurately map coordinates accounting for bilateral IFRAME_PADDING inset
                 // @ts-ignore
                 evt.clientX = Math.round(
-                    event.data.clientX * widthRatio + left
+                    left + (event.data.clientX + IFRAME_PADDING) * scaleX
                 );
                 // @ts-ignore
                 evt.clientY = Math.round(
-                    event.data.clientY * heightRatio + top
+                    top + (event.data.clientY + IFRAME_PADDING) * scaleY
                 );
             } else if (event.data.type === 'keydown' || event.data.type === 'keyup') {
                 // @ts-ignore
-                evt.key = event.data.key;
+                evt.key = String(event.data.key || '');
             }
 
             iframe.dispatchEvent(evt);
         });
 
-        // Set iframe attributes
-        const urlParams = new URLSearchParams(window.location.search);
-        const customUrl = urlParams.get('os-url');
-        if (customUrl) {
-            iframe.src = customUrl;
-        } else if (urlParams.has('dev-os')) {
-            iframe.src = 'http://localhost:3000/';
-        } else {
-            iframe.src = './os/index.html';
-        }
-
-        // Automatic fallback to hosted URL if local bundle fails
-        let fallbackTriggered = false;
-        iframe.onerror = () => {
-            if (!fallbackTriggered && iframe.src !== 'https://ossystem-pi.vercel.app/') {
-                fallbackTriggered = true;
-                iframe.src = 'https://ossystem-pi.vercel.app/';
+        // Error detection & recovery on iframe error event
+        iframe.addEventListener('error', () => {
+            if (!fallbackAttempted) {
+                triggerFallback();
+            } else {
+                handleFatalLoadFailure();
             }
-        };
+        });
+
+        // Verify loaded content on load event
+        iframe.addEventListener('load', () => {
+            // Confirm cross-origin fallback or custom endpoints on load event
+            if (fallbackAttempted || customUrl) {
+                loadConfirmed = true;
+                if (watchdogTimer) {
+                    clearTimeout(watchdogTimer);
+                    watchdogTimer = null;
+                }
+                return;
+            }
+
+            try {
+                const doc = iframe.contentDocument;
+                if (!doc) {
+                    // Document inaccessible (cross-origin fallback)
+                    loadConfirmed = true;
+                    if (watchdogTimer) {
+                        clearTimeout(watchdogTimer);
+                        watchdogTimer = null;
+                    }
+                    return;
+                }
+
+                // Ignore initial about:blank before navigation starts
+                if (!doc.location || doc.location.href === 'about:blank' || doc.URL === 'about:blank') {
+                    return;
+                }
+                const title = (doc.title || '').toLowerCase();
+                const text = (doc.body?.textContent || '').trim();
+                const hasRoot = !!doc.getElementById('root');
+                if (
+                    title.includes('404') ||
+                    title.includes('cannot get') ||
+                    text.includes('Cannot GET') ||
+                    text.includes('404 Not Found') ||
+                    (!hasRoot && doc.body && doc.body.children.length === 0 && text.length === 0)
+                ) {
+                    triggerFallback();
+                    return;
+                }
+
+                // Local HTML bundle verified successfully
+                if (hasRoot) {
+                    localDocumentLoaded = true;
+                    const rootEl = doc.getElementById('root');
+                    if (rootEl && rootEl.children && rootEl.children.length > 0) {
+                        loadConfirmed = true;
+                        if (watchdogTimer) {
+                            clearTimeout(watchdogTimer);
+                            watchdogTimer = null;
+                        }
+                    }
+                }
+            } catch (e) {
+                // Cross-origin iframe (expected for fallback URL)
+                loadConfirmed = true;
+                if (watchdogTimer) {
+                    clearTimeout(watchdogTimer);
+                    watchdogTimer = null;
+                }
+            }
+
+            try {
+                iframe.contentWindow?.postMessage({ type: 'host-ping' }, '*');
+            } catch (e) {}
+        });
+
+        // Resilient watchdog timer: only trigger fallback if local bundle completely fails to respond
+        if (!customUrl && !urlParams.has('dev-os')) {
+            watchdogTimer = setTimeout(() => {
+                if (!loadConfirmed) {
+                    try {
+                        const rootEl = iframe.contentDocument?.getElementById('root');
+                        if (rootEl && rootEl.children && rootEl.children.length > 0) {
+                            loadConfirmed = true;
+                            return;
+                        }
+                    } catch (e) {}
+                    triggerFallback();
+                }
+            }, 10000);
+        }
 
         iframe.style.width = this.screenSize.width + 'px';
         iframe.style.height = this.screenSize.height + 'px';
@@ -204,10 +371,12 @@ export default class MonitorScreen extends EventEmitter {
         iframe.style.boxSizing = 'border-box';
         iframe.style.opacity = '1';
         iframe.style.zIndex = '1';
+        iframe.style.backgroundColor = '#1d2e2f';
         iframe.className = 'jitter';
         iframe.id = 'computer-screen';
         iframe.frameBorder = '0';
         iframe.title = 'inviOS';
+        iframe.setAttribute('allow', 'autoplay; fullscreen; clipboard-read; clipboard-write');
 
         // Add iframe to container
         container.appendChild(iframe);
