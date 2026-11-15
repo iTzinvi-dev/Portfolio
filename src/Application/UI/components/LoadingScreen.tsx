@@ -149,16 +149,16 @@ const LoadingScreen: React.FC<LoadingProps> = () => {
                         <div style={styles.logoContainer}>
                             <div>
                                 <p style={styles.green}>
-                                    <b>iTzinvi,</b>{' '}
+                                    <b>iTz invi,</b>{' '}
                                 </p>
                                 <p style={styles.green}>
-                                    <b>invi Inc.</b>
+                                    <b>inviCo inc</b>
                                 </p>
                             </div>
                         </div>
                         <div style={styles.headerInfo}>
                             <p>Released: 2026</p>
-                            <p>INVIBIOS (C)2026 iTzinvi Inc.,</p>
+                            <p>INVIBIOS (C)2026 inviCo inc,</p>
                         </div>
                     </div>
                     <div style={styles.body} className="loading-screen-body">

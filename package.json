@@ -1,5 +1,12 @@
 {
-    "repository": "#",
+    "name": "portfolio-website",
+    "version": "1.0.0",
+    "description": "Interactive 3D Room Portfolio for iTz invi (inviCo inc)",
+    "author": "iTz invi <contact@itzinvi.tech>",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/iTzinvi-dev/Portfolio.git"
+    },
     "license": "UNLICENSED",
     "scripts": {
         "start": "node server/index.ts",
