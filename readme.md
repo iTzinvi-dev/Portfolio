@@ -7,7 +7,7 @@ Featuring an interactive 3D room experience built with Three.js, React, and Type
 ## Contact & Social Links
 
 - **GitHub**: [iTzinvi-dev](https://github.com/iTzinvi-dev)
-- **Email**: [itzinvi.official@gmail.com](mailto:itzinvi.official@gmail.com)
+- **Email**: [contact@itzinvi.tech](mailto:contact@itzinvi.tech)
 - **X**: [Placeholder](#)
 - **LinkedIn**: [Placeholder](#)
 - **Resume**: Interactive blank placeholder option for future upload
